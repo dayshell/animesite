@@ -1,6 +1,5 @@
 import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Search, LayoutGrid, LayoutTemplate, Sun, LogIn, ChevronDown, Crown } from "lucide-react";
+import { Crown, Coins } from "lucide-react";
 import poster1 from "@/assets/images/poster-1.png";
 import poster2 from "@/assets/images/poster-2.png";
 import poster3 from "@/assets/images/poster-3.png";
@@ -10,6 +9,15 @@ import poster6 from "@/assets/images/poster-6.png";
 import poster7 from "@/assets/images/poster-7.png";
 import poster8 from "@/assets/images/poster-8.png";
 import bannerBg from "@/assets/images/banner-bg.png";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
+
+import avatar1 from "@/assets/avatars/avatar-1.png";
+import avatar2 from "@/assets/avatars/avatar-2.png";
+import avatar3 from "@/assets/avatars/avatar-3.png";
+import avatar4 from "@/assets/avatars/avatar-4.png";
+import avatar5 from "@/assets/avatars/avatar-5.png";
+import avatar6 from "@/assets/avatars/avatar-6.png";
 
 const animeList = [
   { id: 1, title: "Агрессивная Рэцуко", rating: "+8.75", image: poster1 },
@@ -22,51 +30,21 @@ const animeList = [
   { id: 8, title: "Монолог фармацевта 2", rating: "+8.95", image: poster8 },
 ];
 
+const users = [
+  { name: "Zarnoe", level: "50 Ур.", coins: "3958", avatar: avatar1, color: "bg-purple-500/20 text-purple-400" },
+  { name: "nemika", level: "2 Ур.", coins: "3350", avatar: avatar2, color: "bg-red-500/20 text-red-400" },
+  { name: "Kukuruza", level: "35 Ур.", coins: "3218", avatar: avatar3, color: "bg-green-500/20 text-green-400" },
+  { name: "d7377001", level: "15 Ур.", coins: "2817", avatar: avatar4, color: "bg-orange-500/20 text-orange-400" },
+  { name: "=", level: "20 Ур.", coins: "2742", avatar: avatar5, color: "bg-red-500/20 text-red-400" },
+  { name: "Падший", level: "20 Ур.", coins: "2246", avatar: avatar6, color: "bg-zinc-600/30 text-zinc-300" },
+];
+
 export default function Home() {
   return (
-    <div className="min-h-[100dvh] w-full bg-[#0d0d12] text-white font-sans selection:bg-[#3b82f6] selection:text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-[#0d0d12]/80 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center gap-1 font-bold text-xl tracking-tight text-white hover:text-white/80 transition-colors">
-              SHIRUHO
-              <ChevronDown className="w-4 h-4 text-white/50 ml-1" />
-            </Link>
-          </div>
+    <div className="min-h-[100dvh] flex flex-col w-full bg-[#0d0d12] text-white font-sans selection:bg-[#3b82f6] selection:text-white">
+      <SiteHeader />
 
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href="#" className="flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors">
-              <Search className="w-4 h-4" />
-              Поиск
-            </Link>
-            <Link href="#" className="flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors">
-              <LayoutGrid className="w-4 h-4" />
-              Каталог
-              <ChevronDown className="w-3 h-3 opacity-50" />
-            </Link>
-            <Link href="#" className="flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors">
-              <LayoutTemplate className="w-4 h-4" />
-              Экосистема
-              <ChevronDown className="w-3 h-3 opacity-50" />
-            </Link>
-          </nav>
-
-          <div className="flex items-center gap-4">
-            <button className="text-white/70 hover:text-white transition-colors p-2 rounded-full hover:bg-white/5">
-              <Sun className="w-5 h-5" />
-            </button>
-            <Button className="bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white font-medium rounded-md px-4 py-2 h-9 flex items-center gap-2 border-none cursor-pointer">
-              <LogIn className="w-4 h-4" />
-              Войти
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8 pb-24">
-        
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-12 flex-1 w-full">
         {/* Most Viewed Section */}
         <section className="space-y-4">
           <div className="flex items-center gap-3">
@@ -153,7 +131,36 @@ export default function Home() {
           </div>
         </section>
 
+        {/* User Activity */}
+        <section className="space-y-6 pb-8">
+          <h2 className="text-2xl font-bold tracking-tight text-white">Активность пользователей</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            {users.map((user, index) => (
+              <div 
+                key={index}
+                className="flex items-center gap-3 bg-[#16161e] border border-white/5 rounded-xl p-2.5 pr-4 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/50 transition-all cursor-pointer"
+              >
+                <img src={user.avatar} alt={user.name} className="w-9 h-9 rounded-full object-cover" />
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-white/90">{user.name}</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${user.color}`}>
+                      {user.level}
+                    </span>
+                    <div className="flex items-center gap-1 text-white/50 text-xs font-medium">
+                      <Coins className="w-3 h-3 text-[#f59e0b]" />
+                      {user.coins}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
       </main>
+      
+      <SiteFooter />
     </div>
   );
 }
