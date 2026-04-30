@@ -1,0 +1,56 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "yQYUIaVXboKDVcRvWexFT"
+uri = "file://artifacts/anime-home/src/assets/images/poster-1.png"
+type = "image"
+title = "Red panda office worker"
+
+[[generated]]
+id = "NsbeTUYoIae1oKPZ1s9S5"
+uri = "file://artifacts/anime-home/src/assets/images/poster-2.png"
+type = "image"
+title = "Fantasy adventurer anime boy"
+
+[[generated]]
+id = "Fim5HG3VY7ry_kVgWp-rG"
+uri = "file://artifacts/anime-home/src/assets/images/poster-3.png"
+type = "image"
+title = "Dark assassin anime girl"
+
+[[generated]]
+id = "bpwlWyT9aKMST2YrDAsSa"
+uri = "file://artifacts/anime-home/src/assets/images/poster-4.png"
+type = "image"
+title = "Sword fantasy anime character"
+
+[[generated]]
+id = "tcMJcoUXc1Mmp6KRmfU8m"
+uri = "file://artifacts/anime-home/src/assets/images/poster-5.png"
+type = "image"
+title = "Epic isekai anime poster"
+
+[[generated]]
+id = "UIgbiGMbMOGyKZd--b2DK"
+uri = "file://artifacts/anime-home/src/assets/images/poster-6.png"
+type = "image"
+title = "Pirate adventure anime"
+
+[[generated]]
+id = "deyfwN_q6gHsjLNnnkBFv"
+uri = "file://artifacts/anime-home/src/assets/images/poster-7.png"
+type = "image"
+title = "Cute black cat slice-of-life"
+
+[[generated]]
+id = "1A6tbM87p8nAhzNo3rhJ4"
+uri = "file://artifacts/anime-home/src/assets/images/poster-8.png"
+type = "image"
+title = "Apothecary anime girl"
+
+[[generated]]
+id = "we8Z3_DebQJRG14NRaOBf"
+uri = "file://artifacts/anime-home/src/assets/images/banner-bg.png"
+type = "image"
+title = "Cherry blossom banner"
