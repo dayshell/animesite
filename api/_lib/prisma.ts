@@ -5,7 +5,25 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
-    log: ['error', 'warn'],
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
+    },
   });
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma;
+}
+
+// Ensure connection is established
+export async function connectPrisma() {
+  try {
+    await prisma.$connect();
+    console.log('Prisma connected successfully');
+  } catch (error) {
+    console.error('Failed to connect to Prisma:', error);
+    throw error;
+  }
+}

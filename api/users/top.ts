@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { prisma } from '../_lib/prisma';
+import { prisma } from '../_lib/prisma.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,6 +15,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // Validate DATABASE_URL
+    if (!process.env.DATABASE_URL) {
+      console.error('DATABASE_URL is not set');
+      return res.status(500).json({ error: 'Database configuration error' });
+    }
+
     const { limit = '50' } = req.query;
 
     // Получаем пользователей с подсчетом их активности
@@ -83,8 +89,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     return res.status(200).json(topUsers);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Top users error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('Error stack:', error.stack);
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      message: process.env.NODE_ENV === 'development' ? error.message : 'Failed to load top users',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 }

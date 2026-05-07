@@ -1,14 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../_lib/prisma.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-
-// Создаем глобальный экземпляр Prisma для переиспользования
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
-
-const prisma = globalForPrisma.prisma || new PrismaClient();
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -33,6 +26,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Email, username and password are required' });
     }
 
+    // Validate DATABASE_URL
+    if (!process.env.DATABASE_URL) {
+      console.error('DATABASE_URL is not set');
+      return res.status(500).json({ error: 'Database configuration error' });
+    }
+
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email },
@@ -40,6 +39,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (existingUser) {
       return res.status(400).json({ error: 'User already exists' });
+    }
+
+    // Check if username is taken
+    const existingUsername = await prisma.user.findUnique({
+      where: { username },
+    });
+
+    if (existingUsername) {
+      return res.status(400).json({ error: 'Username already taken' });
     }
 
     // Hash password
@@ -55,10 +63,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
 
+    // Validate JWT_SECRET
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      console.error('JWT_SECRET is not set');
+      return res.status(500).json({ error: 'Authentication configuration error' });
+    }
+
     // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'your-secret-key',
+      jwtSecret,
       { expiresIn: '7d' }
     );
 
@@ -71,9 +86,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error: any) {
     console.error('Register error:', error);
+    console.error('Error stack:', error.stack);
     return res.status(500).json({ 
       error: 'Internal server error',
-      message: error.message 
+      message: process.env.NODE_ENV === 'development' ? error.message : 'Registration failed',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 }
