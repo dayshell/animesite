@@ -15,6 +15,8 @@ import AdminAnimeForm from "@/pages/admin/anime-form";
 import AdminSettings from "@/pages/admin/settings";
 import AdminSiteSettings from "@/pages/admin/site-settings";
 import AdminImportAnime from "@/pages/admin/import-anime";
+import AdminTags from "@/pages/admin/tags";
+import AdminStudios from "@/pages/admin/studios";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,8 @@ function Router() {
       <Route path="/admin/anime/new" component={AdminAnimeForm} />
       <Route path="/admin/anime/edit/:id" component={AdminAnimeForm} />
       <Route path="/admin/anime/import" component={AdminImportAnime} />
+      <Route path="/admin/tags" component={AdminTags} />
+      <Route path="/admin/studios" component={AdminStudios} />
       <Route path="/admin/settings" component={AdminSettings} />
       <Route path="/admin/site-settings" component={AdminSiteSettings} />
       
