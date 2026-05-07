@@ -1,14 +1,20 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { prisma } from '../_lib/prisma';
-import { hashPassword, generateToken } from '../_lib/auth';
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+
+const prisma = new PrismaClient();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
   if (req.method !== 'POST') {
@@ -19,60 +25,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { email, username, password } = req.body;
 
     if (!email || !username || !password) {
-      return res.status(400).json({ error: 'All fields are required' });
+      return res.status(400).json({ error: 'Email, username and password are required' });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
-    }
-
-    // Проверяем существование пользователя
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email },
-          { username }
-        ]
-      }
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
     });
 
     if (existingUser) {
-      return res.status(400).json({ 
-        error: existingUser.email === email ? 'Email already exists' : 'Username already exists' 
-      });
+      return res.status(400).json({ error: 'User already exists' });
     }
 
-    // Создаем пользователя
-    const hashedPassword = await hashPassword(password);
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
     const user = await prisma.user.create({
       data: {
         email,
         username,
         password: hashedPassword,
+        role: 'USER',
       },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        avatar: true,
-        role: true,
-        createdAt: true,
-      }
     });
 
-    // Генерируем токен
-    const token = generateToken({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-    });
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '7d' }
+    );
+
+    // Return user data without password
+    const { password: _, ...userWithoutPassword } = user;
 
     return res.status(201).json({
-      user,
+      user: userWithoutPassword,
       token,
     });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Register error:', error);
     return res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    await prisma.$disconnect();
   }
 }
