@@ -60,7 +60,6 @@ attached_assets/
 .agents/
 pnpm-lock.yaml
 pnpm-workspace.yaml
-.npmrc
 .replit
 .replitignore
 replit.md
