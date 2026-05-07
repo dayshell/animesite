@@ -1,17 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Settings, Save, Image, Type } from "lucide-react";
 import { Link } from "wouter";
-import { adminStore } from "@/lib/admin-store";
+import { useAdminStore } from "@/lib/admin-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminSiteSettings() {
   const { toast } = useToast();
-  const [settings, setSettings] = useState(adminStore.getSiteSettings());
+  const { getSiteSettings, updateSiteSettings } = useAdminStore();
+  const [settings, setSettings] = useState(getSiteSettings());
 
   const handleSave = () => {
-    adminStore.updateSiteSettings(settings);
+    updateSiteSettings(settings);
     toast({
       title: "Успешно",
       description: "Настройки сайта сохранены"

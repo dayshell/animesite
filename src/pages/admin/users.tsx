@@ -1,39 +1,34 @@
 import { useState } from "react";
-import { Users, Search, Edit, Trash2, Mail, Lock, Trophy, Calendar, MessageSquare, Star, X, Award } from "lucide-react";
+import { Users, Search, Edit, Trash2, Mail, Calendar, X } from "lucide-react";
 import { Link } from "wouter";
-import { adminStore } from "@/lib/admin-store";
+import { useAdminStore } from "@/lib/admin-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
-type ProfileTab = 'overview' | 'comments' | 'achievements';
-
 export default function AdminUsers() {
   const { toast } = useToast();
-  const [users, setUsers] = useState(adminStore.getUsers());
+  const { users, updateUser, deleteUser } = useAdminStore();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedUser, setSelectedUser] = useState<number | null>(null);
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
-  const [activeTab, setActiveTab] = useState<ProfileTab>('overview');
   const [editData, setEditData] = useState({ 
-    name: "",
+    username: "",
     email: "", 
-    password: ""
   });
 
   const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleEdit = (userId: number) => {
+  const handleEdit = (userId: string) => {
     const user = users.find(u => u.id === userId);
     if (user) {
       setSelectedUser(userId);
       setEditData({ 
-        name: user.name,
-        email: user.email, 
-        password: ""
+        username: user.username,
+        email: user.email,
       });
       setEditMode(true);
     }
@@ -42,12 +37,10 @@ export default function AdminUsers() {
   const handleSave = () => {
     if (selectedUser) {
       const updateData: any = {};
-      if (editData.name) updateData.name = editData.name;
+      if (editData.username) updateData.username = editData.username;
       if (editData.email) updateData.email = editData.email;
-      if (editData.password) updateData.password = editData.password;
       
-      adminStore.updateUser(selectedUser, updateData);
-      setUsers(adminStore.getUsers());
+      updateUser(selectedUser, updateData);
       setEditMode(false);
       setSelectedUser(null);
       toast({
@@ -57,10 +50,9 @@ export default function AdminUsers() {
     }
   };
 
-  const handleDelete = (userId: number) => {
+  const handleDelete = (userId: string) => {
     if (confirm("Вы уверены, что хотите удалить этого пользователя?")) {
-      adminStore.deleteUser(userId);
-      setUsers(adminStore.getUsers());
+      deleteUser(userId);
       if (selectedUser === userId) {
         setSelectedUser(null);
         setEditMode(false);
@@ -128,29 +120,27 @@ export default function AdminUsers() {
                     onClick={() => {
                       setSelectedUser(user.id);
                       setEditMode(false);
-                      setActiveTab('overview');
                     }}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <img
-                          src={user.avatar}
-                          alt={user.name}
-                          className="w-12 h-12 rounded-full flex-shrink-0 ring-2 ring-gray-200 dark:ring-white/10"
-                        />
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center text-xl font-black bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-white/90 flex-shrink-0">
+                          {user.username.charAt(0).toUpperCase()}
+                        </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-bold text-gray-900 dark:text-white truncate">
-                            {user.name}
+                            {user.username}
                           </h3>
                           <p className="text-sm text-gray-600 dark:text-white/60 truncate">
                             {user.email}
                           </p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs bg-[#8b5cf6]/20 text-[#8b5cf6] dark:text-[#a78bfa] px-2 py-0.5 rounded font-medium">
-                              {user.level}
-                            </span>
-                            <span className="text-xs text-gray-500 dark:text-white/50">
-                              {user.achievements.length} достижений
+                            <span className={`text-xs px-2 py-0.5 rounded font-medium ${
+                              user.role === 'ADMIN' 
+                                ? 'bg-purple-500/20 text-purple-600 dark:text-purple-400' 
+                                : 'bg-blue-500/20 text-blue-600 dark:text-blue-400'
+                            }`}>
+                              {user.role}
                             </span>
                           </div>
                         </div>
@@ -210,7 +200,7 @@ export default function AdminUsers() {
                         variant="ghost"
                         onClick={() => {
                           setEditMode(false);
-                          setEditData({ name: "", email: "", password: "" });
+                          setEditData({ username: "", email: "" });
                         }}
                       >
                         <X className="w-4 h-4" />
@@ -223,8 +213,8 @@ export default function AdminUsers() {
                       </label>
                       <Input
                         type="text"
-                        value={editData.name}
-                        onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                        value={editData.username}
+                        onChange={(e) => setEditData({ ...editData, username: e.target.value })}
                         className="bg-white dark:bg-[#0d0d12]"
                       />
                     </div>
@@ -242,20 +232,6 @@ export default function AdminUsers() {
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-2">
-                        <Lock className="w-4 h-4 inline mr-1" />
-                        Новый пароль
-                      </label>
-                      <Input
-                        type="password"
-                        placeholder="Оставьте пустым, чтобы не менять"
-                        value={editData.password}
-                        onChange={(e) => setEditData({ ...editData, password: e.target.value })}
-                        className="bg-white dark:bg-[#0d0d12]"
-                      />
-                    </div>
-
                     <div className="flex gap-2 pt-4">
                       <Button onClick={handleSave} className="flex-1">
                         Сохранить
@@ -264,7 +240,7 @@ export default function AdminUsers() {
                         variant="outline"
                         onClick={() => {
                           setEditMode(false);
-                          setEditData({ name: "", email: "", password: "" });
+                          setEditData({ username: "", email: "" });
                         }}
                       >
                         Отмена
@@ -276,207 +252,65 @@ export default function AdminUsers() {
                     {/* Profile Header */}
                     <div className="p-6 bg-gradient-to-br from-[#3b82f6] to-[#8b5cf6] text-white">
                       <div className="text-center">
-                        <img
-                          src={selectedUserData.avatar}
-                          alt={selectedUserData.name}
-                          className="w-24 h-24 rounded-full mx-auto mb-3 ring-4 ring-white/20"
-                        />
+                        <div className="w-24 h-24 rounded-full mx-auto mb-3 ring-4 ring-white/20 flex items-center justify-center text-3xl font-black bg-white/20">
+                          {selectedUserData.username.charAt(0).toUpperCase()}
+                        </div>
                         <h3 className="text-xl font-bold mb-1">
-                          {selectedUserData.name}
+                          {selectedUserData.username}
                         </h3>
                         <p className="text-sm text-white/80 mb-2">
                           {selectedUserData.email}
                         </p>
-                        <span className="inline-block bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium">
-                          {selectedUserData.level}
+                        <span className={`inline-block backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium ${
+                          selectedUserData.role === 'ADMIN' 
+                            ? 'bg-purple-500/30' 
+                            : 'bg-white/20'
+                        }`}>
+                          {selectedUserData.role}
                         </span>
                       </div>
                     </div>
 
-                    {/* Tabs */}
-                    <div className="flex border-b border-gray-200 dark:border-white/10 bg-white dark:bg-[#0d0d12]">
-                      <button
-                        onClick={() => setActiveTab('overview')}
-                        className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
-                          activeTab === 'overview'
-                            ? 'text-[#3b82f6] dark:text-[#3b82f6]'
-                            : 'text-gray-600 dark:text-white/60 hover:text-gray-900 dark:hover:text-white'
-                        }`}
-                      >
-                        <Star className="w-4 h-4 inline mr-1" />
-                        Обзор
-                        {activeTab === 'overview' && (
-                          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3b82f6]" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => setActiveTab('comments')}
-                        className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
-                          activeTab === 'comments'
-                            ? 'text-[#3b82f6] dark:text-[#3b82f6]'
-                            : 'text-gray-600 dark:text-white/60 hover:text-gray-900 dark:hover:text-white'
-                        }`}
-                      >
-                        <MessageSquare className="w-4 h-4 inline mr-1" />
-                        Комментарии
-                        {activeTab === 'comments' && (
-                          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3b82f6]" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => setActiveTab('achievements')}
-                        className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
-                          activeTab === 'achievements'
-                            ? 'text-[#3b82f6] dark:text-[#3b82f6]'
-                            : 'text-gray-600 dark:text-white/60 hover:text-gray-900 dark:hover:text-white'
-                        }`}
-                      >
-                        <Trophy className="w-4 h-4 inline mr-1" />
-                        Награды
-                        {activeTab === 'achievements' && (
-                          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3b82f6]" />
-                        )}
-                      </button>
-                    </div>
-
-                    {/* Tab Content */}
-                    <div className="p-6 max-h-[500px] overflow-y-auto">
-                      {activeTab === 'overview' && (
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-white dark:bg-[#0d0d12] rounded-xl p-4 border border-gray-200 dark:border-white/10">
-                              <div className="flex items-center gap-2 text-gray-600 dark:text-white/60 mb-1">
-                                <MessageSquare className="w-4 h-4" />
-                                <span className="text-xs">Комментариев</span>
-                              </div>
-                              <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                                {selectedUserData.comments.length}
-                              </div>
-                            </div>
-                            <div className="bg-white dark:bg-[#0d0d12] rounded-xl p-4 border border-gray-200 dark:border-white/10">
-                              <div className="flex items-center gap-2 text-gray-600 dark:text-white/60 mb-1">
-                                <Trophy className="w-4 h-4" />
-                                <span className="text-xs">Достижений</span>
-                              </div>
-                              <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                                {selectedUserData.achievements.length}
-                              </div>
-                            </div>
+                    {/* User Info */}
+                    <div className="p-6 space-y-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
+                          <div className="flex items-center gap-2 text-gray-600 dark:text-white/60">
+                            <Calendar className="w-4 h-4" />
+                            <span className="text-sm">Регистрация</span>
                           </div>
-
-                          <div className="space-y-3 pt-2">
-                            <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
-                              <div className="flex items-center gap-2 text-gray-600 dark:text-white/60">
-                                <Calendar className="w-4 h-4" />
-                                <span className="text-sm">Регистрация</span>
-                              </div>
-                              <span className="font-medium text-gray-900 dark:text-white text-sm">
-                                {selectedUserData.createdAt}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
-                              <div className="flex items-center gap-2 text-gray-600 dark:text-white/60">
-                                <Mail className="w-4 h-4" />
-                                <span className="text-sm">ID пользователя</span>
-                              </div>
-                              <span className="font-medium text-gray-900 dark:text-white text-sm">
-                                #{selectedUserData.id}
-                              </span>
-                            </div>
+                          <span className="font-medium text-gray-900 dark:text-white text-sm">
+                            {new Date(selectedUserData.createdAt).toLocaleDateString('ru-RU')}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
+                          <div className="flex items-center gap-2 text-gray-600 dark:text-white/60">
+                            <Mail className="w-4 h-4" />
+                            <span className="text-sm">ID пользователя</span>
                           </div>
-
-                          <div className="pt-4 space-y-2">
-                            <Button
-                              onClick={() => handleEdit(selectedUserData.id)}
-                              className="w-full"
-                            >
-                              <Edit className="w-4 h-4 mr-2" />
-                              Редактировать профиль
-                            </Button>
-                            <Button
-                              variant="outline"
-                              onClick={() => handleDelete(selectedUserData.id)}
-                              className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-500/10"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Удалить пользователя
-                            </Button>
-                          </div>
+                          <span className="font-medium text-gray-900 dark:text-white text-sm truncate max-w-[150px]">
+                            {selectedUserData.id.slice(0, 8)}...
+                          </span>
                         </div>
-                      )}
+                      </div>
 
-                      {activeTab === 'comments' && (
-                        <div className="space-y-3">
-                          {selectedUserData.comments.length > 0 ? (
-                            selectedUserData.comments.map((comment) => {
-                              const anime = adminStore.getAnime(comment.animeId);
-                              return (
-                                <div
-                                  key={comment.id}
-                                  className="bg-white dark:bg-[#0d0d12] rounded-xl p-4 border border-gray-200 dark:border-white/10"
-                                >
-                                  <div className="flex items-start gap-3 mb-2">
-                                    <MessageSquare className="w-4 h-4 text-[#3b82f6] mt-1 flex-shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                      <div className="text-xs text-gray-500 dark:text-white/50 mb-1">
-                                        {anime?.title || 'Неизвестное аниме'}
-                                      </div>
-                                      <p className="text-sm text-gray-900 dark:text-white">
-                                        {comment.text}
-                                      </p>
-                                      <div className="text-xs text-gray-500 dark:text-white/50 mt-2">
-                                        {comment.createdAt}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })
-                          ) : (
-                            <div className="text-center py-8">
-                              <MessageSquare className="w-12 h-12 text-gray-300 dark:text-white/10 mx-auto mb-3" />
-                              <p className="text-sm text-gray-500 dark:text-white/50">
-                                Пользователь еще не оставлял комментариев
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {activeTab === 'achievements' && (
-                        <div className="space-y-3">
-                          {selectedUserData.achievements.length > 0 ? (
-                            selectedUserData.achievements.map((achievementId) => (
-                              <div
-                                key={achievementId}
-                                className="bg-white dark:bg-[#0d0d12] rounded-xl p-4 border border-gray-200 dark:border-white/10 hover:border-[#3b82f6] dark:hover:border-[#3b82f6] transition-colors"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="w-12 h-12 bg-gradient-to-br from-[#fbbf24] to-[#f59e0b] rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <Award className="w-6 h-6 text-white" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <h4 className="font-bold text-gray-900 dark:text-white text-sm mb-1">
-                                      Достижение #{achievementId}
-                                    </h4>
-                                    <p className="text-xs text-gray-600 dark:text-white/60">
-                                      Получено за активность на сайте
-                                    </p>
-                                  </div>
-                                  <Trophy className="w-5 h-5 text-[#fbbf24] flex-shrink-0" />
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-center py-8">
-                              <Trophy className="w-12 h-12 text-gray-300 dark:text-white/10 mx-auto mb-3" />
-                              <p className="text-sm text-gray-500 dark:text-white/50">
-                                У пользователя пока нет достижений
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      <div className="pt-4 space-y-2">
+                        <Button
+                          onClick={() => handleEdit(selectedUserData.id)}
+                          className="w-full"
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Редактировать профиль
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleDelete(selectedUserData.id)}
+                          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-500/10"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Удалить пользователя
+                        </Button>
+                      </div>
                     </div>
                   </>
                 )

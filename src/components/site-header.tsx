@@ -1,33 +1,38 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, LayoutGrid, LayoutTemplate, Sun, Moon, LogIn, ChevronDown, Mic } from "lucide-react";
+import { Search, LayoutGrid, LayoutTemplate, Sun, Moon, LogIn, ChevronDown, Mic, User, LogOut, Settings } from "lucide-react";
 import { AuthDialog } from "@/components/auth-dialog";
 import { SearchDropdown } from "@/components/search-dropdown";
 import { EcosystemDropdown } from "@/components/ecosystem-dropdown";
 import { useTheme } from "@/components/theme-provider";
-import { adminStore } from "@/lib/admin-store";
+import { useAdminStore } from "@/lib/admin-store";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function SiteHeader() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
   const [ecosystemDropdownOpen, setEcosystemDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { theme, setTheme } = useTheme();
-  const [siteSettings, setSiteSettings] = useState(adminStore.getSiteSettings());
-
-  // Обновляем настройки при изменении
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSiteSettings(adminStore.getSiteSettings());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  const { user, isAuthenticated, logout } = useAdminStore();
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
+  };
+
+  const handleLogout = () => {
+    logout();
+    setLocation('/');
   };
 
   return (
@@ -35,17 +40,7 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-3 font-bold text-xl tracking-tight text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-white/80 transition-colors whitespace-nowrap">
-            {siteSettings.logoType !== 'text' && siteSettings.logoUrl && (
-              <img
-                src={siteSettings.logoUrl}
-                alt="Logo"
-                className="w-8 h-8 object-contain"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            )}
-            {siteSettings.logoType !== 'logo' && siteSettings.siteName}
+            Shiruho Anime
           </Link>
 
           {/* Search Bar */}
@@ -112,13 +107,72 @@ export function SiteHeader() {
               <Moon className="w-5 h-5" />
             )}
           </button>
-          <Button 
-            onClick={() => setAuthDialogOpen(true)}
-            className="bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white font-medium rounded-md px-4 py-2 h-9 flex items-center gap-2 border-none cursor-pointer"
-          >
-            <LogIn className="w-4 h-4" />
-            Войти
-          </Button>
+          
+          {isAuthenticated && user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-3 bg-gray-100 dark:bg-[#1a1a1f] hover:bg-gray-200 dark:hover:bg-[#222228] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2.5 transition-colors">
+                  <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-white/10 flex items-center justify-center text-gray-700 dark:text-white/90 text-sm font-bold">
+                    {user.username.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{user.username}</span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-gray-600 dark:text-white/60">0 Ур.</span>
+                      <div className="flex items-center gap-1">
+                        <div className="w-4 h-4 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center">
+                          <span className="text-[10px] font-black text-yellow-900">¥</span>
+                        </div>
+                        <span className="text-xs font-bold text-[#f59e0b]">0</span>
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-gray-600 dark:text-white/60 ml-1" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-[#1a1a1f] border-gray-200 dark:border-white/10">
+                <DropdownMenuLabel className="text-gray-900 dark:text-white">
+                  <div className="flex flex-col">
+                    <span className="font-medium">{user.username}</span>
+                    <span className="text-xs text-gray-500 dark:text-white/50 font-normal">{user.email}</span>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-gray-200 dark:bg-white/10" />
+                <DropdownMenuItem 
+                  onClick={() => setLocation('/profile')}
+                  className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer"
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  Профиль
+                </DropdownMenuItem>
+                {user.role === 'ADMIN' && (
+                  <DropdownMenuItem 
+                    onClick={() => setLocation('/admin')}
+                    className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Админ панель
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator className="bg-gray-200 dark:bg-white/10" />
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Выйти
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button 
+              onClick={() => setAuthDialogOpen(true)}
+              className="bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white font-medium rounded-md px-4 py-2 h-9 flex items-center gap-2 border-none cursor-pointer"
+            >
+              <LogIn className="w-4 h-4" />
+              Войти
+            </Button>
+          )}
         </div>
       </div>
 

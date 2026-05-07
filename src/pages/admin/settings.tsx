@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { Settings, Tags, Building2, Plus, Trash2, Edit } from "lucide-react";
 import { Link } from "wouter";
-import { adminStore } from "@/lib/admin-store";
+import { useAdminStore } from "@/lib/admin-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export default function AdminSettings() {
+  const { tags, studios, getTags, getStudios, addTag, deleteTag, addStudio, updateStudio, deleteStudio } = useAdminStore();
   const [activeTab, setActiveTab] = useState<'tags' | 'studios'>('tags');
-  const [tags, setTags] = useState(adminStore.getTags());
-  const [studios, setStudios] = useState(adminStore.getStudios());
   const [activeCategory, setActiveCategory] = useState<'cast' | 'traits' | 'setting'>('cast');
   
   // Tags state
@@ -16,8 +15,8 @@ export default function AdminSettings() {
   
   // Studios state
   const [isAddingStudio, setIsAddingStudio] = useState(false);
-  const [editingStudioId, setEditingStudioId] = useState<number | null>(null);
-  const [studioFormData, setStudioFormData] = useState({ name: "", logo: "" });
+  const [editingStudioId, setEditingStudioId] = useState<string | null>(null);
+  const [studioFormData, setStudioFormData] = useState({ name: "", description: "" });
 
   const categories = [
     { id: 'cast' as const, label: 'Основной каст', icon: '👥' },
@@ -25,55 +24,50 @@ export default function AdminSettings() {
     { id: 'setting' as const, label: 'Сеттинг', icon: '🌍' }
   ];
 
-  const filteredTags = tags.filter(tag => tag.category === activeCategory);
+  const filteredTags = tags.filter(tag => tag.name.toLowerCase().includes(''));
 
   // Tag handlers
   const handleAddTag = () => {
     if (newTagName.trim()) {
-      adminStore.addTag({ name: newTagName.trim(), category: activeCategory });
-      setTags(adminStore.getTags());
+      addTag({ id: Date.now().toString(), name: newTagName.trim(), color: '#3b82f6' });
       setNewTagName("");
     }
   };
 
-  const handleDeleteTag = (id: number) => {
+  const handleDeleteTag = (id: string) => {
     if (confirm("Удалить этот тег?")) {
-      adminStore.deleteTag(id);
-      setTags(adminStore.getTags());
+      deleteTag(id);
     }
   };
 
   // Studio handlers
   const handleAddStudio = () => {
-    if (studioFormData.name && studioFormData.logo) {
-      adminStore.addStudio(studioFormData);
-      setStudios(adminStore.getStudios());
-      setStudioFormData({ name: "", logo: "" });
+    if (studioFormData.name) {
+      addStudio({ id: Date.now().toString(), name: studioFormData.name, description: studioFormData.description });
+      setStudioFormData({ name: "", description: "" });
       setIsAddingStudio(false);
     }
   };
 
-  const handleEditStudio = (id: number) => {
+  const handleEditStudio = (id: string) => {
     const studio = studios.find(s => s.id === id);
     if (studio) {
-      setStudioFormData({ name: studio.name, logo: studio.logo });
+      setStudioFormData({ name: studio.name, description: studio.description || "" });
       setEditingStudioId(id);
     }
   };
 
   const handleUpdateStudio = () => {
-    if (editingStudioId && studioFormData.name && studioFormData.logo) {
-      adminStore.updateStudio(editingStudioId, studioFormData);
-      setStudios(adminStore.getStudios());
-      setStudioFormData({ name: "", logo: "" });
+    if (editingStudioId && studioFormData.name) {
+      updateStudio(editingStudioId, studioFormData);
+      setStudioFormData({ name: "", description: "" });
       setEditingStudioId(null);
     }
   };
 
-  const handleDeleteStudio = (id: number) => {
+  const handleDeleteStudio = (id: string) => {
     if (confirm("Удалить эту студию?")) {
-      adminStore.deleteStudio(id);
-      setStudios(adminStore.getStudios());
+      deleteStudio(id);
     }
   };
 
@@ -247,13 +241,12 @@ export default function AdminSettings() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-2">
-                      Логотип (буквы или emoji)
+                      Описание (опционально)
                     </label>
                     <Input
-                      value={studioFormData.logo}
-                      onChange={(e) => setStudioFormData({ ...studioFormData, logo: e.target.value })}
-                      placeholder="Например: SG или 🎬"
-                      maxLength={3}
+                      value={studioFormData.description}
+                      onChange={(e) => setStudioFormData({ ...studioFormData, description: e.target.value })}
+                      placeholder="Краткое описание студии"
                       className="h-12 bg-white dark:bg-[#0d0d12]"
                     />
                   </div>
@@ -266,7 +259,7 @@ export default function AdminSettings() {
                       onClick={() => {
                         setIsAddingStudio(false);
                         setEditingStudioId(null);
-                        setStudioFormData({ name: "", logo: "" });
+                        setStudioFormData({ name: "", description: "" });
                       }}
                       className="h-12"
                     >
@@ -286,7 +279,7 @@ export default function AdminSettings() {
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div className="w-14 h-14 bg-gradient-to-br from-[#3b82f6] to-[#8b5cf6] rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-lg">
-                      {studio.logo}
+                      {studio.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
@@ -309,9 +302,11 @@ export default function AdminSettings() {
                   <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-1">
                     {studio.name}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-white/60">
-                    ID: {studio.id}
-                  </p>
+                  {studio.description && (
+                    <p className="text-sm text-gray-600 dark:text-white/60">
+                      {studio.description}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

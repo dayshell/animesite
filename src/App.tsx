@@ -1,6 +1,7 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
@@ -8,6 +9,7 @@ import Catalog from "@/pages/catalog";
 import AnimeDetail from "@/pages/anime-detail";
 import UsersRating from "@/pages/users-rating";
 import Achievements from "@/pages/achievements";
+import Profile from "@/pages/profile";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminUsers from "@/pages/admin/users";
 import AdminAnime from "@/pages/admin/anime";
@@ -17,6 +19,7 @@ import AdminSiteSettings from "@/pages/admin/site-settings";
 import AdminImportAnime from "@/pages/admin/import-anime";
 import AdminTags from "@/pages/admin/tags";
 import AdminStudios from "@/pages/admin/studios";
+import PublicProfile from "@/pages/public-profile";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +31,8 @@ function Router() {
       <Route path="/anime/:id" component={AnimeDetail} />
       <Route path="/users-rating" component={UsersRating} />
       <Route path="/achievements" component={Achievements} />
+      <Route path="/profile" component={Profile} />
+      <Route path="/user/:username" component={PublicProfile} />
       
       {/* Admin Routes */}
       <Route path="/admin" component={AdminDashboard} />
@@ -54,6 +59,7 @@ function App() {
           <Router />
         </WouterRouter>
         <Toaster />
+        <Sonner position="top-right" theme="dark" />
       </TooltipProvider>
     </QueryClientProvider>
   );

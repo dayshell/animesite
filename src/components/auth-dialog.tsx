@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import { FaVk, FaTelegram, FaGoogle, FaDiscord, FaTwitch } from "react-icons/fa";
 import { SiSteam } from "react-icons/si";
+import { useAdminStore } from "@/lib/admin-store";
+import { toast } from "sonner";
 
 interface AuthDialogProps {
   open: boolean;
@@ -14,12 +16,51 @@ interface AuthDialogProps {
 export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [isRegister, setIsRegister] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  const { setUser, setToken } = useAdminStore();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Логика входа
-    console.log("Login:", { email, password });
+    setLoading(true);
+
+    try {
+      const endpoint = isRegister ? '/api/auth/register' : '/api/auth/login';
+      const body = isRegister 
+        ? { email, username, password }
+        : { email, password };
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка авторизации');
+      }
+
+      // Сохраняем пользователя и токен
+      setUser(data.user);
+      setToken(data.token);
+      
+      toast.success(isRegister ? 'Регистрация успешна!' : 'Вход выполнен!');
+      onOpenChange(false);
+      
+      // Очищаем форму
+      setEmail('');
+      setUsername('');
+      setPassword('');
+    } catch (error: any) {
+      toast.error(error.message || 'Произошла ошибка');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const socialLogins = [
@@ -36,23 +77,39 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
       <DialogContent className="sm:max-w-[500px] bg-[#0d0d12] border border-white/10 text-white p-8">
         <DialogHeader className="space-y-3 text-center">
           <DialogTitle className="text-3xl font-bold text-white">
-            Войти в аккаунт
+            {isRegister ? 'Создать аккаунт' : 'Войти в аккаунт'}
           </DialogTitle>
           <p className="text-white/50 text-base">
-            Напиши почту, на которой создавал аккаунт
+            {isRegister 
+              ? 'Заполни данные для регистрации' 
+              : 'Напиши почту, на которой создавал аккаунт'}
           </p>
         </DialogHeader>
 
-        <form onSubmit={handleLogin} className="space-y-4 mt-6">
+        <form onSubmit={handleSubmit} className="space-y-4 mt-6">
           <div>
             <Input
               type="email"
               placeholder="Почта"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
               className="h-14 bg-[#1a1a1f] border-white/10 text-white placeholder:text-white/30 rounded-xl text-base focus-visible:ring-[#3b82f6] focus-visible:ring-2 focus-visible:border-transparent"
             />
           </div>
+
+          {isRegister && (
+            <div>
+              <Input
+                type="text"
+                placeholder="Имя пользователя"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                className="h-14 bg-[#1a1a1f] border-white/10 text-white placeholder:text-white/30 rounded-xl text-base focus-visible:ring-[#3b82f6] focus-visible:ring-2 focus-visible:border-transparent"
+              />
+            </div>
+          )}
 
           <div className="relative">
             <Input
@@ -60,6 +117,8 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               placeholder="Пароль"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
               className="h-14 bg-[#1a1a1f] border-white/10 text-white placeholder:text-white/30 rounded-xl text-base pr-12 focus-visible:ring-[#3b82f6] focus-visible:ring-2 focus-visible:border-transparent"
             />
             <button
@@ -77,18 +136,22 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
           <Button
             type="submit"
-            className="w-full h-14 bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white font-medium rounded-xl text-base"
+            disabled={loading}
+            className="w-full h-14 bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white font-medium rounded-xl text-base disabled:opacity-50"
           >
-            Войти
+            {loading ? 'Загрузка...' : (isRegister ? 'Зарегистрироваться' : 'Войти')}
           </Button>
 
           <div className="text-center">
-            <span className="text-white/50">Нет аккаунта? </span>
+            <span className="text-white/50">
+              {isRegister ? 'Уже есть аккаунт? ' : 'Нет аккаунта? '}
+            </span>
             <button
               type="button"
+              onClick={() => setIsRegister(!isRegister)}
               className="text-[#3b82f6] hover:text-[#3b82f6]/80 font-medium transition-colors"
             >
-              Создай его!
+              {isRegister ? 'Войди!' : 'Создай его!'}
             </button>
           </div>
 
@@ -117,14 +180,16 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             ))}
           </div>
 
-          <div className="text-center pt-2">
-            <button
-              type="button"
-              className="text-white/40 hover:text-white/60 text-sm transition-colors"
-            >
-              Восстановить пароль
-            </button>
-          </div>
+          {!isRegister && (
+            <div className="text-center pt-2">
+              <button
+                type="button"
+                className="text-white/40 hover:text-white/60 text-sm transition-colors"
+              >
+                Восстановить пароль
+              </button>
+            </div>
+          )}
         </form>
       </DialogContent>
     </Dialog>

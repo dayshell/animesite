@@ -1,24 +1,23 @@
 import { useState } from "react";
 import { Film, Plus, Edit, Trash2, Search, Download } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { adminStore } from "@/lib/admin-store";
+import { useAdminStore } from "@/lib/admin-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export default function AdminAnime() {
-  const [animeList, setAnimeList] = useState(adminStore.getAnimeList());
+  const { anime: animeList, deleteAnime } = useAdminStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [, setLocation] = useLocation();
 
   const filteredAnime = animeList.filter(anime =>
     anime.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    anime.description.toLowerCase().includes(searchQuery.toLowerCase())
+    (anime.description && anime.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     if (confirm("Вы уверены, что хотите удалить это аниме?")) {
-      adminStore.deleteAnime(id);
-      setAnimeList(adminStore.getAnimeList());
+      deleteAnime(id);
     }
   };
 
@@ -73,23 +72,30 @@ export default function AdminAnime() {
         {filteredAnime.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {filteredAnime.map((anime) => {
-              const studio = adminStore.getStudio(anime.studioId);
               return (
                 <div
                   key={anime.id}
                   className="group bg-gray-50 dark:bg-[#121218] border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden hover:shadow-lg hover:border-[#3b82f6] dark:hover:border-[#3b82f6] transition-all"
                 >
                   <div className="aspect-[2/3] bg-gray-200 dark:bg-white/5 relative overflow-hidden">
-                    <img
-                      src={anime.poster}
-                      alt={anime.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute top-2 right-2">
-                      <span className="bg-[#22c55e] text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
-                        {anime.rating}
-                      </span>
-                    </div>
+                    {anime.poster ? (
+                      <img
+                        src={anime.poster}
+                        alt={anime.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Film className="w-12 h-12 text-gray-400 dark:text-white/20" />
+                      </div>
+                    )}
+                    {anime.rating && (
+                      <div className="absolute top-2 right-2">
+                        <span className="bg-[#22c55e] text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
+                          {anime.rating}
+                        </span>
+                      </div>
+                    )}
                     {/* Overlay с кнопками при наведении */}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                       <Button
@@ -113,14 +119,18 @@ export default function AdminAnime() {
                       {anime.title}
                     </h3>
                     <div className="text-xs text-gray-600 dark:text-white/60 space-y-0.5">
-                      <div className="flex items-center gap-1">
-                        <span className="font-medium">Студия:</span>
-                        <span className="truncate">{studio?.name || 'Неизвестно'}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="font-medium">Эпизодов:</span>
-                        <span>{anime.episodes.length}</span>
-                      </div>
+                      {anime.year && (
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">Год:</span>
+                          <span>{anime.year}</span>
+                        </div>
+                      )}
+                      {anime.episodes && (
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">Эпизодов:</span>
+                          <span>{anime.episodes}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

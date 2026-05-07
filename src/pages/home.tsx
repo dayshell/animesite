@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Crown, Coins } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import poster1 from "@/assets/images/poster-1.png";
 import poster2 from "@/assets/images/poster-2.png";
 import poster3 from "@/assets/images/poster-3.png";
@@ -19,6 +19,8 @@ import avatar3 from "@/assets/avatars/avatar-3.png";
 import avatar4 from "@/assets/avatars/avatar-4.png";
 import avatar5 from "@/assets/avatars/avatar-5.png";
 import avatar6 from "@/assets/avatars/avatar-6.png";
+
+const defaultAvatars = [avatar1, avatar2, avatar3, avatar4, avatar5, avatar6];
 
 const animeList = [
   { id: 1, title: "Агрессивная Рэцуко", rating: "+8.75", image: poster1 },
@@ -64,18 +66,30 @@ const animeByPeriod = {
   ],
 };
 
-const users = [
-  { name: "Zarnoe", level: "50 Ур.", coins: "3958", avatar: avatar1, color: "bg-purple-500/20 text-purple-400" },
-  { name: "nemika", level: "2 Ур.", coins: "3350", avatar: avatar2, color: "bg-red-500/20 text-red-400" },
-  { name: "Kukuruza", level: "35 Ур.", coins: "3218", avatar: avatar3, color: "bg-green-500/20 text-green-400" },
-  { name: "d7377001", level: "15 Ур.", coins: "2817", avatar: avatar4, color: "bg-orange-500/20 text-orange-400" },
-  { name: "=", level: "20 Ур.", coins: "2742", avatar: avatar5, color: "bg-red-500/20 text-red-400" },
-  { name: "Падший", level: "20 Ур.", coins: "2246", avatar: avatar6, color: "bg-zinc-600/30 text-zinc-300" },
-];
+
+interface ActivityUser {
+  id: string;
+  username: string;
+  avatar: string | null;
+  level: string;
+  activityPercent: string;
+  stats: {
+    comments: number;
+    ratings: number;
+  };
+}
 
 export default function Home() {
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month'>('day');
+  const [users, setUsers] = useState<ActivityUser[]>([]);
   const currentAnimeList = animeByPeriod[selectedPeriod];
+
+  useEffect(() => {
+    fetch('/api/users/activity?limit=6')
+      .then(res => res.json())
+      .then(data => setUsers(data))
+      .catch(err => console.error('Failed to load user activity:', err));
+  }, []);
 
   return (
     <div className="min-h-[100dvh] flex flex-col w-full bg-white dark:bg-[#0d0d12] text-gray-900 dark:text-white font-sans selection:bg-[#3b82f6] selection:text-white">
@@ -194,26 +208,44 @@ export default function Home() {
         <section className="space-y-6 pb-8">
           <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Активность пользователей</h2>
           <div className="flex flex-wrap items-center gap-3">
-            {users.map((user, index) => (
-              <div 
-                key={index}
-                className="flex items-center gap-3 bg-gray-100 dark:bg-[#16161e] border border-gray-200 dark:border-white/5 rounded-xl p-2.5 pr-4 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-gray-300/50 dark:hover:shadow-black/50 transition-all cursor-pointer"
-              >
-                <img src={user.avatar} alt={user.name} className="w-9 h-9 rounded-full object-cover" />
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-gray-900 dark:text-white/90">{user.name}</span>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${user.color}`}>
-                      {user.level}
-                    </span>
-                    <div className="flex items-center gap-1 text-gray-500 dark:text-white/50 text-xs font-medium">
-                      <Coins className="w-3 h-3 text-[#f59e0b]" />
-                      {user.coins}
+            {users.length === 0 ? (
+              <p className="text-gray-600 dark:text-white/60">Нет активных пользователей</p>
+            ) : (
+              users.map((user, index) => {
+                const userAvatar = user.avatar || defaultAvatars[index % defaultAvatars.length];
+                const colors = [
+                  "bg-purple-500/20 text-purple-400",
+                  "bg-red-500/20 text-red-400",
+                  "bg-green-500/20 text-green-400",
+                  "bg-orange-500/20 text-orange-400",
+                  "bg-blue-500/20 text-blue-400",
+                  "bg-pink-500/20 text-pink-400",
+                ];
+                const color = colors[index % colors.length];
+                
+                return (
+                  <div 
+                    key={user.id}
+                    className="flex items-center gap-3 bg-gray-100 dark:bg-[#16161e] border border-gray-200 dark:border-white/5 rounded-xl p-2.5 pr-4 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-gray-300/50 dark:hover:shadow-black/50 transition-all cursor-pointer"
+                  >
+                    <img src={userAvatar} alt={user.username} className="w-9 h-9 rounded-full object-cover" />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-900 dark:text-white/90">{user.username}</span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${color}`}>
+                          {user.level}
+                        </span>
+                        <div className="flex items-center gap-1 text-gray-500 dark:text-white/50 text-xs font-medium">
+                          <span title="Активность">{user.activityPercent}</span>
+                          <Coins className="w-3 h-3 text-[#f59e0b]" />
+                          {user.stats.comments + user.stats.ratings}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                );
+              })
+            )}
           </div>
         </section>
 
