@@ -3,7 +3,12 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-const prisma = new PrismaClient();
+// Создаем глобальный экземпляр Prisma для переиспользования
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+
+const prisma = globalForPrisma.prisma || new PrismaClient();
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -58,10 +63,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       user: userWithoutPassword,
       token,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
-  } finally {
-    await prisma.$disconnect();
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message 
+    });
   }
 }
