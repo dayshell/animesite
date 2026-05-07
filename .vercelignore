@@ -1,0 +1,21 @@
+# Old monorepo structure
+artifacts/
+lib/
+scripts/
+attached_assets/
+.agents/
+.local/
+
+# Development files
+node_modules/
+.git/
+.cache/
+
+# Config files not needed for deployment
+pnpm-lock.yaml
+pnpm-workspace.yaml
+.npmrc
+.replit
+.replitignore
+replit.md
+tsconfig.base.json

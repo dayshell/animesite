@@ -47,3 +47,20 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Vercel
+.vercel
+
+# Old artifacts (monorepo structure)
+artifacts/
+lib/
+scripts/
+attached_assets/
+.agents/
+pnpm-lock.yaml
+pnpm-workspace.yaml
+.npmrc
+.replit
+.replitignore
+replit.md
+tsconfig.base.json
