@@ -54,6 +54,7 @@ Thumbs.db
 # Old artifacts (monorepo structure)
 artifacts/
 lib/
+!src/lib/
 scripts/
 attached_assets/
 .agents/
